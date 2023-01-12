@@ -1,0 +1,119 @@
+
+
+
+namespace data{
+  auto h=new TH1D();
+}
+
+void logl(int &npar, double *gin, double &f, double *par, int iflag){
+
+  f=0.0;
+  for(int i=0;i<data::h->GetNbinsX();i++){
+
+    
+
+    double xmin=data::h->GetBinLowEdge(i);
+    double  xmax=data::h->GetBinLowEdge(i)+data::h->GetBinWidth(i);
+
+    double ni=data::h->GetBinContent(i);
+    double pi=(1/par[0])*( exp(-pow(xmin/par[0],par[1]))-exp(-pow(xmax/par[0],par[1])));
+  
+    f=f-ni*log(pi);
+    
+    
+  }}
+  
+  
+  
+
+
+
+void ES1(){
+
+
+  TRandom3 rnd;
+  rnd.SetSeed(1234567);
+  double N=10000;
+
+  double k=1.5;
+  double lambda=1;
+
+  TH1D *hist=new TH1D("h","h",150,0.,0.);
+  for(int i=0;i<N;i++){
+
+    double eta=rnd.Rndm();
+   
+    double x=lambda*pow(log( 1/(1-eta)),1/k);
+   
+    
+    hist->Fill(x);
+   
+  }
+
+   
+  hist->Draw();
+  
+  data::h=hist;
+  
+  TMinuit minuit(2);
+  minuit.SetErrorDef(0.5);
+  minuit.DefineParameter(0,"lambda",1,0.01,0.,0.);
+  minuit.DefineParameter(1,"kappa",1.5,0.01,0.,0.);
+
+  minuit.Command("MIGRAD");
+
+  double lambda_BML,kappa_BML;
+  double e_lambda,e_kappa;
+
+  minuit.GetParameter(0,lambda_BML,e_lambda);
+  minuit.GetParameter(1,kappa_BML,e_kappa);
+
+
+  cout <<"lambda_BML="<< lambda_BML <<"+-" << e_lambda <<  endl;
+  cout << "kappa_BML="<< kappa_BML <<"+-" << e_kappa << endl;
+
+  cout << "_------------------------------------------------------_" << endl;
+
+
+  TF1 *f1=new TF1("f1","[2]*([1]/pow([0],[1]))*pow(x,[1]-1)*exp(-pow(x/[0],[1]))",0,5);
+
+
+ 
+ f1->SetParameter(1,k);
+ f1->SetParameter(0,lambda);
+ f1->FixParameter(2,1);
+ hist->Fit("f1","0 MULTI");
+ 
+ double k_fit=f1->GetParameter(0);
+ double e_k_fit=f1->GetParError(0);
+ double lambda_fit= f1->GetParameter(1);
+ double e_lambda_fit=f1->GetParError(1);
+
+
+ cout << "k=("<< k_fit << " +- "<< e_k_fit << ")" << endl;
+ cout << "lambda=(" << lambda_fit << "+-"<< e_lambda_fit << ")" << endl;
+ 
+ 
+ 
+ f1->SetParameter(2,hist->GetEntries()*hist->GetBinWidth(1));
+ f1->Draw("SAME");
+  
+
+
+
+ 
+
+
+
+  
+
+
+  
+  
+
+    
+
+  
+
+
+			 }
